@@ -1,5 +1,5 @@
 # js::bind
-The js::bind library is an header only library for [Emscripten](http:://www.emscripten.org/), to easily bind any C++ function, member function or lambdas as a Javascript callable callback.
+`js::bind` makes any C++ function, member function or lambda as a Javascript callable callback for [Emscripten](http:://www.emscripten.org/).
 
 ## Easy to use
 
@@ -15,3 +15,7 @@ The js::bind library is an header only library for [Emscripten](http:://www.emsc
   auto onclick = [](val event){ cout << "hello world ! " << endl; };
   clickme_btn.set("onclick", js::bind(onclick, _1));
 ```
+
+## Authors
+
+ * [Damien Buhl alias daminetreg](mailto:damien.buhl@lecbna.org)
