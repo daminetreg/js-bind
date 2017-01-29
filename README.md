@@ -3,10 +3,11 @@
 
 ## Easy to use
 
+Try the [following example in your browser](https://daminetreg.github.io/js-bind/test/build/example.html) : 
 ```cpp
 
   using namespace std;
-  using std::placeholders;
+  using namespace std::placeholders;
   using emscripten::val;
 
   val::global("document")["body"].set("innerHTML", "<button id=\"clickme_btn\">Click me</button>");

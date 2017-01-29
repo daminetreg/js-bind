@@ -5,7 +5,7 @@
 int main(int argc, char** argv) {
 
   using namespace std;
-  using std::placeholders;
+  using namespace std::placeholders;
   using emscripten::val;
 
   val::global("document")["body"].set("innerHTML", "<button id=\"clickme_btn\">Click me</button>");
