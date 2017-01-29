@@ -24,7 +24,8 @@ class MiniXhr : public std::enable_shared_from_this<MiniXhr> {
      */
     void on_readystate(val event) {
       std::cout << "ready " << std::endl;
-      std::cout << "xxhr::on_readystate: " 
+      std::cout << "xxhr:: " 
+          << event["type"].as<std::string>() << ". "
           << xhr["readyState"].as<size_t>() << " - " << url_ << " :: "
           << xhr["status"].as<size_t>() << ": " 
           << xhr["statusText"].as<std::string>() << std::endl;
@@ -38,14 +39,15 @@ class MiniXhr : public std::enable_shared_from_this<MiniXhr> {
 
  void MiniXhr::GET() { 
  
-  js::function<void(emscripten::val)> callback = std::bind(&MiniXhr::on_readystate, shared_from_this(), std::placeholders::_1);
- xhr.set("onreadystatechange", callback);
- 
-  emscripten_run_script(R"(
-   Some = {};
-  )");
-  //val::global("Some").set("hello", js::bind([](){ std::cout << "hello" << std::endl; }));
+  auto callback = js::bind(&MiniXhr::on_readystate, shared_from_this(), std::placeholders::_1);
+  xhr.set("onreadystatechange", callback);
 
+  auto lamb = [](val e) { 
+    std::cout << "Im a lambda to handle event : " << e["type"].as<std::string>() << std::endl; 
+  };
+
+  xhr.set("onload", js::bind(lamb, std::placeholders::_1));
+ 
   xhr.call<val>("open", std::string("GET"), url_, true);
   xhr.call<val>("send");
 }

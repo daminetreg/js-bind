@@ -1,6 +1,8 @@
 #ifndef JS_BIND_HPP
 #define JS_BIND_HPP
 
+#include <iostream>
+
 #include <utility>
 #include <functional>
 
@@ -13,8 +15,8 @@
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
-#include <boost/type_traits.hpp>
-
+#include <pre/type_traits/function_traits.hpp>
+#include <pre/functional/to_std_function.hpp>
 
 #ifndef JS_BIND_MAX_ARITY
   /**
@@ -88,57 +90,89 @@ namespace js {
 
 
 
-  template<class FunctionType, class BindExpr>
-  val deduce_functor_adapter(BindExpr&& b) {
-    using func_t = typename ::js::functor_t<
-      std::is_same<void, typename boost::function_traits<FunctionType>::result_type>::value, 
-      boost::function_traits<FunctionType>::arity
-    >::type;
-    func_t functor = b;
+//  template<class FunctionType, class BindExpr>
+//  val deduce_functor_adapter(BindExpr&& b) {
+//    using func_t = typename ::js::functor_t<
+//      std::is_same<void, typename boost::function_traits<FunctionType>::result_type>::value, 
+//      boost::function_traits<FunctionType>::arity
+//    >::type;
+//    func_t functor = b;
+//
+//    auto functor_adapter = val(functor)["opcall"].call<val>("bind", val(functor)); 
+//    return functor_adapter;
+//  }
+//
+//  /**
+//   * \brief 
+//   */
+//  template< class FunctionType >
+//  struct function {
+//    typedef FunctionType type;
+//    
+//    template<class BindExpr, typename std::enable_if<std::is_bind_expression<BindExpr>::value>::type* = nullptr>
+//    function(BindExpr&& b) : functor_adapter(deduce_functor_adapter<FunctionType>(b)) {std::cout << "CONSTRUCTING js::function" << std::endl; }
+//
+//    template<class BindExpr, typename std::enable_if<std::is_bind_expression<BindExpr>::value>::type* = nullptr>
+//    function(const BindExpr& b) : functor_adapter(deduce_functor_adapter<FunctionType>(std::move(b))) {}
+//
+//    template<class... Args, typename std::enable_if< std::is_same<void, typename boost::function_traits<FunctionType>::result_type>::value >::type* = nullptr>
+//    auto operator()(Args&&... args) const { return functor_adapter(JS_BIND_DETAIL_FWD(args)...); }
+//
+//    operator emscripten::val&() { return functor_adapter; }
+//    operator emscripten::val() const { return functor_adapter; }
+//
+//    private:
+//    emscripten::val functor_adapter;
+//  };
 
-    auto functor_adapter = val(functor)["opcall"].call<val>("bind", val(functor)); 
-    return functor_adapter;
-  }
+  template<typename... Args> struct count_placeholders;
 
-  /**
-   * \brief 
-   */
-  template< class FunctionType >
-  struct function {
-    typedef FunctionType type;
-    
-    template<class BindExpr, typename std::enable_if<std::is_bind_expression<BindExpr>::value>::type* = nullptr>
-    function(BindExpr&& b) : functor_adapter(deduce_functor_adapter<FunctionType>(b)) {std::cout << "CONSTRUCTING js::function" << std::endl; }
-
-    template<class BindExpr, typename std::enable_if<std::is_bind_expression<BindExpr>::value>::type* = nullptr>
-    function(const BindExpr& b) : functor_adapter(deduce_functor_adapter<FunctionType>(std::move(b))) {}
-
-    template<class... Args, typename std::enable_if< std::is_same<void, typename boost::function_traits<FunctionType>::result_type>::value >::type* = nullptr>
-    auto operator()(Args&&... args) const { return functor_adapter(JS_BIND_DETAIL_FWD(args)...); }
-
-    operator emscripten::val&() { return functor_adapter; }
-    operator emscripten::val() const { return functor_adapter; }
-
-    private:
-    emscripten::val functor_adapter;
+  template<>
+  struct count_placeholders<> {
+      static constexpr size_t value = 0;
   };
 
-  //template< class F, class... Args >
-  //emscripten::val bind( F&& f, Args&&... args ) {
-  //  using emscripten::val;
-  //  auto bind_result = std::bind( std::forward<decltype(f)>(f), JS_BIND_DETAIL_FWD(args)... );
-  //  std::function<void(val)> functor = bind_result;
+  template <class T>
+  struct placeholder_increment {
+    static constexpr size_t value = (std::is_placeholder<typename std::decay<T>::type>::value) ? 1 : 0;
+  };
 
-  //  std::cout << boost::function_traits<decltype(&decltype(bind_result)::operator())>::arity << std::endl;
-////decltype(bind_result::result_type)
-  //  
-  //  //TODO: if result_type is non-void, THEN select val.
-  //  //TODO: if F is member function ref, then take sizeof(args - 1) as arity.
-  //  //TODO: if F is not member function ref, then take sizeof(args - 1) as arity.
+  template<typename Arg, typename... Args>
+  struct count_placeholders<Arg, Args...> {
+      static constexpr size_t value = 
+       placeholder_increment<Arg>::value + count_placeholders<Args...>::value;
+  }; 
 
-  //  // We ensure the correct object will always be bound to the this of the function
-  //  auto functor_adapter = val(functor)["opcall"].call<val>("bind", val(functor)); 
-  //  return functor_adapter;
+
+  template< class F, class... Args >
+  emscripten::val bind( F&& f, Args&&... args ) {
+    using emscripten::val;
+    using pre::type_traits::function_traits;
+
+    using result_type = typename function_traits<std::decay_t<F>>::result_type;
+    auto bind_result = std::bind( std::forward<decltype(f)>(f), JS_BIND_DETAIL_FWD(args)... );
+
+    //count_placeholders<Args...> a; a.banaa();
+      using callback_t = typename functor_t<
+        std::is_same< result_type, void>::value,
+        count_placeholders<Args...>::value
+      >::type;
+
+      callback_t functor = bind_result;
+
+      // We ensure the correct object will always be bound to the this of the function
+      auto functor_adapter = val(functor)["opcall"].call<val>("bind", val(functor)); 
+      return functor_adapter;
+    }
+
+
+    //std::cout << boost::function_traits<decltype(&decltype(bind_result)::operator())>::arity << std::endl;
+//decltype(bind_result::result_type)
+    
+    //TODO: if result_type is non-void, THEN select val. OK
+    //TODO: if F is member function ref, then take sizeof(args - 1) as arity.
+    //TODO: if F is not member function ref, then take sizeof(args) as arity.
+
   //};
 
 }
