@@ -4,6 +4,7 @@
 ## Easy to use
 
 Try the [following example in your browser](https://daminetreg.github.io/js-bind/test/build/example.html) : 
+
 ```cpp
 
   using namespace std;
