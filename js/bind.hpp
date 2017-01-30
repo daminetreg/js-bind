@@ -1,22 +1,17 @@
 #ifndef JS_BIND_HPP
 #define JS_BIND_HPP
 
-#include <iostream>
-
 #include <utility>
 #include <functional>
 
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-#include <boost/mpl/assert.hpp>
-
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
 #include <pre/type_traits/function_traits.hpp>
-#include <pre/functional/to_std_function.hpp>
 
 #ifndef JS_BIND_MAX_ARITY
   /**
@@ -68,6 +63,41 @@
 #define JS_BIND_DETAIL_FWD(...) ::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
 
 namespace js {
+
+  /**
+   * \brief Equivalent of [std::bind](http://en.cppreference.com/w/cpp/utility/functional/bind) returning a javascript functor.
+   * \param f The lambda, function, member function to bind
+   * \param args 
+   * \return An emscripten::val representing a javascript functor with it's 
+   *         this-scope bound correctly. It can be called from js or c++ with 
+   *         the call operator ( *i.e.* `operator()` ).
+   *         
+   */
+  template< class F, class... Args >
+  emscripten::val bind( F&& f, Args&&... args );
+
+
+  namespace detail {
+    template<typename... Args> struct placeholders_count;
+   
+    template<>
+    struct placeholders_count<> {
+      static constexpr size_t value = 0;
+    };
+   
+    template <class T>
+    struct one_if_placeholder {
+      static constexpr size_t value = 
+        (std::is_placeholder<typename std::decay<T>::type>::value) ? 1 : 0;
+    };
+   
+    template<typename Arg, typename... Args>
+    struct placeholders_count<Arg, Args...> {
+      static constexpr size_t value = 
+        one_if_placeholder<Arg>::value + placeholders_count<Args...>::value;
+    }; 
+  }
+
   using emscripten::val;
 
   template<const bool returns_void, const size_t arity>
@@ -78,28 +108,7 @@ namespace js {
   EMSCRIPTEN_BINDINGS(jsbindhpp) {
     JS_BIND_DETAIL_GENERATE_BINDINGS()
   }
-
-  namespace detail {
-    template<typename... Args> struct count_placeholders;
-
-    template<>
-    struct count_placeholders<> {
-        static constexpr size_t value = 0;
-    };
-
-    template <class T>
-    struct placeholder_increment {
-      static constexpr size_t value = (std::is_placeholder<typename std::decay<T>::type>::value) ? 1 : 0;
-    };
-
-    template<typename Arg, typename... Args>
-    struct count_placeholders<Arg, Args...> {
-        static constexpr size_t value = 
-         placeholder_increment<Arg>::value + count_placeholders<Args...>::value;
-    }; 
-  }
-
-
+ 
   template< class F, class... Args >
   emscripten::val bind( F&& f, Args&&... args ) {
     using emscripten::val;
@@ -108,10 +117,9 @@ namespace js {
     using result_type = typename function_traits<std::decay_t<F>>::result_type;
     auto bind_result = std::bind( std::forward<decltype(f)>(f), JS_BIND_DETAIL_FWD(args)... );
 
-    //count_placeholders<Args...> a; a.banaa();
       using callback_t = typename functor_t<
         std::is_same< result_type, void>::value,
-        detail::count_placeholders<Args...>::value
+        detail::placeholders_count<Args...>::value
       >::type;
 
       callback_t functor = bind_result;
