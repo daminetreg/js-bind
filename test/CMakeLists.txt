@@ -7,12 +7,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-g4) # Generates emscripten C++ sourcemaps
 endif()
 
-# Boost
-include_directories (AFTER /opt/libs/boost_1_61_0/)
-
-# Pre
-include_directories (AFTER /home/daminetreg/workspace/product-modulo5-automation-stations/local_src/lib-cpp-pre)
-
+include_directories(AFTER ${CMAKE_CURRENT_LIST_DIR}/../all-inclusive)
 include_directories(BEFORE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # bind

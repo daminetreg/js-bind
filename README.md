@@ -3,6 +3,8 @@
 
 ## Easy to use
 
+* Compile with : `emcc --bind -Ijs-bind/ -Ijs-bind/all-inclusive`
+
 Try the [following example in your browser](https://daminetreg.github.io/js-bind/test/build/example.html) : 
 
 ```cpp
@@ -17,6 +19,12 @@ Try the [following example in your browser](https://daminetreg.github.io/js-bind
   auto onclick = [](val event){ cout << "hello world ! " << endl; };
   clickme_btn.set("onclick", js::bind(onclick, _1));
 ```
+
+### Dependencies all-inclusive
+If you don't care of managing the dependencies, you can simply use the shipped-with folder [all-inclusive/](all-inclusive/) to your compiler path, otherwise simply omit it and provide the following dependencies:
+
+- [Boost.Preprocessor](https://github.com/boostorg/preprocessor/)
+- [cpp-pre type_traits](https://github.com/cpp-pre/type_traits) 
 
 ## Authors
 
