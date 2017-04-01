@@ -19,6 +19,11 @@ Try the [following example in your browser](https://daminetreg.github.io/js-bind
   clickme_btn.set("onclick", js::bind(onclick, _1));
 ```
 
-## Authors
+## License
+Please give copyright notice for this project : [Boost Software License](./LICENSE).
+
+```
+Copyright (c) 2017 Damien Buhl alias daminetreg (damien.buhl@lecbna.org)
+```
 
  * [Damien Buhl alias daminetreg](mailto:damien.buhl@lecbna.org)
