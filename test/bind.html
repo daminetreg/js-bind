@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en_US">
+<head>
+  <meta charset="utf-8">
+
+  <script type="text/c++">
+    #include <iostream>
+    #include <sstream>
+    #include <functional>
+    #include <memory>
+
+    #include <js/bind.hpp>
+
+    using namespace std::placeholders;
+    using namespace std::string_literals;
+    using emscripten::val;
+
+    class MiniXhr : public std::enable_shared_from_this<MiniXhr> {
+      using val = emscripten::val;
+      using url_t = std::string;
+
+      public:
+
+        void set_url(const url_t& url) { url_ = url; }
+
+        void GET();
+
+        /**
+         *
+         * The member function to be called from javascript.
+         */
+        void on_readystate(val event) {
+          std::cout << "ready " << std::endl;
+          std::cout << "xxhr:: " 
+              << event["type"].as<std::string>() << ". "
+              << xhr["readyState"].as<size_t>() << " - " << url_ << " :: "
+              << xhr["status"].as<size_t>() << ": " 
+              << xhr["statusText"].as<std::string>() << std::endl;
+        }
+
+      private:
+        url_t url_;
+        val xhr = val::global("XMLHttpRequest").new_();
+    };
+       
+
+    void MiniXhr::GET() { 
+     
+      auto callback = js::bind(&MiniXhr::on_readystate, shared_from_this(), std::placeholders::_1);
+      xhr.set("onreadystatechange", callback);
+
+      auto lamb = [&](val e) { 
+        std::cout << "Im a lambda to handle event : " << e["type"].as<std::string>() << std::endl; 
+        
+        auto event_text = val::global("document").call<val>("getElementById", "event_text"s);
+
+
+        std::stringstream ss;
+        ss << xhr["readyState"].as<size_t>() << " - " << url_
+          << " :: " << xhr["status"].as<size_t>() << ": "
+          << xhr["statusText"].as<std::string>() 
+          << std::endl;
+
+        event_text.set("innerHTML", "Handling event : "s + ss.str());
+      };
+
+      xhr.set("onreadystatechange", js::bind(lamb, std::placeholders::_1));
+     
+      xhr.call<val>("open", std::string("GET"), url_, true);
+      xhr.call<val>("send");
+    }
+
+
+    int main(int argc, char** argv) {
+      
+      auto clickme_btn = val::global("document").call<val>("getElementById", "clickme_btn"s);
+
+      auto onclick = [](val event){ 
+        std::cout << "Downloading js/bind.hpp! " << std::endl; 
+        auto x = std::make_shared<MiniXhr>(); //shared_ptr needed for callback to work after main exit, due to NO_EXIT_RUNTIME.
+        x->set_url("js/bind.hpp");
+        x->GET();
+      };
+
+      clickme_btn.set("onclick", js::bind(onclick, _1));
+
+
+      return 0;
+    }
+ </script> 
+</head>
+<body>
+  <h1>Download some file</h1>
+  <button id="clickme_btn">Download</button>
+  <span id="event_text"></span>
+</body>
+</html>
