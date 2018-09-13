@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en_US">
+<head>
+  <meta charset="utf-8">
+
+  <script type="text/c++">
+
+    #include <iostream>
+    #include <js/bind.hpp>
+
+    using namespace std::placeholders;
+    using namespace std::string_literals;
+    using emscripten::val;
+
+    int main() {
+      auto clickme_btn = val::global("document").call<val>("getElementById", "clickme_btn"s);
+
+      auto onclick = [](val event){ 
+        std::cout << "hello world ! " << std::endl; 
+      };
+
+      clickme_btn.set("onclick", js::bind(onclick, _1));
+    }
+
+ </script> 
+</head>
+<body>
+  <h1>Call C++ back</h1>
+  <button id="clickme_btn">Click me</button>
+</body>
+</html>
