@@ -2,9 +2,10 @@
 `js::bind` makes any C++ function, member function or lambda as a Javascript callable callback for [Emscripten](http:://www.emscripten.org/).
 
 ## Easy to use
-It's header only and dependency-free, as described here : [INSTALL](./INSTALL.md).
+It's header only. You can set-it-up in 0-time with : [`nxxm .`](https://nxxm.github.io/)
 
-Try the [following example in your browser](https://daminetreg.github.io/js-bind/test/build/example.html) : 
+* [Simple Example in Browser](https://daminetreg.github.io/js-bind/example.html) : [src: ./test/example.html](./test/example.html)
+* [HTTP Request Example](https://daminetreg.github.io/js-bind/bind.html) : [src: ./test/bind.html](./test/bind.html)
 
 ```cpp
 
@@ -12,10 +13,12 @@ Try the [following example in your browser](https://daminetreg.github.io/js-bind
   using namespace std::placeholders;
   using emscripten::val;
 
-  val::global("document")["body"].set("innerHTML", "<button id=\"clickme_btn\">Click me</button>");
-  auto clickme_btn = val::global("document").call<val>("getElementById", string("clickme_btn"));
+  auto clickme_btn = val::global("document").call<val>("getElementById", "clickme_btn"s);
 
-  auto onclick = [](val event){ cout << "hello world ! " << endl; };
+  auto onclick = [](val event){ 
+    std::cout << "hello world ! " << std::endl; 
+  };
+
   clickme_btn.set("onclick", js::bind(onclick, _1));
 ```
 
