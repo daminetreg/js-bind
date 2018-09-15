@@ -2,7 +2,13 @@
 `js::bind` makes any C++ function, member function or lambda as a Javascript callable callback for [Emscripten](http:://www.emscripten.org/).
 
 ## Easy to use
-It's header only. You can set-it-up in 0-time with : [`nxxm .`](https://nxxm.github.io/)
+It's header only. You can set-it-up in 0-time with : [`nxxm .`](https://nxxm.github.io/), add this to `.nxxm/deps`
+
+```
+{
+  "daminetreg/js-bind" : { "@" : "v0.0.2" } 
+}
+```
 
 * [Simple Example in Browser](https://daminetreg.github.io/js-bind/example.html) : [src: ./test/example.html](./test/example.html)
 * [HTTP Request Example](https://daminetreg.github.io/js-bind/bind.html) : [src: ./test/bind.html](./test/bind.html)
