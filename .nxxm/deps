@@ -1,4 +1,4 @@
 {
   "cpp-pre/type_traits" : { "@" : "v2.0.0" },
-  "platform" : "Boost::+boost"
+  "platform" : [ "Boost::+boost" ]
 }

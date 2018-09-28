@@ -6,7 +6,7 @@ It's header only. You can set-it-up in 0-time with : [`nxxm .`](https://nxxm.git
 
 ```
 {
-  "nxxm/js-bind" : { "@" : "v0.0.2" } 
+  "nxxm/js-bind" : { "@" : "v0.0.3" } 
 }
 ```
 
